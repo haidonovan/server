@@ -127,7 +127,7 @@ app.delete('/products', async (req, res) => {
   const { name, price } = req.body;
 
   try {
-    const deletedProduct = await Product.findOneAndDelete({ name: name, price: price });
+    const deletedProduct = await Product.findOneAndDelete({ name: name});
     
     if (!deletedProduct) {
       return res.status(404).json({ message: 'Product not found!' });
