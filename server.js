@@ -121,6 +121,17 @@ app.post('/products', async (req, res) => {
   }
 });
 
+
+// --------------------------------- GET ALL PRODUCT
+app.get('/AllProducts', async (req, res) =>{
+  try {
+    const products = await Product.find();
+    res.json(products);
+  }catch(err){
+    res.status(500).json({message: err.message});
+  }
+});
+
 // --------------------------------- DELETE DATA
 // DELETE a product by name and price
 app.delete('/products', async (req, res) => {
