@@ -151,23 +151,29 @@ app.delete('/products', async (req, res) => {
 });
 
 // ------------------------------------ UPDATE DATA
-app.put('/products', async(req, res)=>{
-  const {name, newPrice} = req.body;
+app.put('/products', async (req, res) => {
+  const { originalName, newName, category, price, status, description} = req.body;
 
   try {
     const updatedProduct = await Product.findOneAndUpdate(
-      {name: name},
-      {price: newPrice},
-      {new: true }
+      { name: originalName }, // Find product by the original name
+      { 
+        name: newName,          // Update name
+        category: category,     // Update category
+        price: price,           // Update price
+        status: status,         // Update status
+        description: description, // Update description
+      }, 
+      { new: true } // Return the updated document
     );
-  
-    if(!updatedProduct){
-      return res.status(404).json({message: 'Product not found!'})
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found!' });
     }
 
-    res.json({message: 'Product updated', updatedProduct});
-  } catch (err){
-    res.status(500).json({message: err.message})
+    res.json({ message: 'Product updated successfully', updatedProduct });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
