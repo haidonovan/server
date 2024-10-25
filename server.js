@@ -81,7 +81,7 @@ app.get('/', async (req, res) => {
 </head>
 <body>
     <div class="container">
-        <h1>Fuck You Pack Thet</h1>
+        <h1>Fuck You</h1>
     </div>
 
     <style>
