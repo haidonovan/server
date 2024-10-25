@@ -72,10 +72,34 @@ const Product = mongoose.model('Product', productSchema, 'product');
 // GET all products
 // GET a product by name
 app.get('/', async (req, res) => {
-  res.status(200).send("Hello Server!");
-});
-app.get('/about', async (req, res) => {
-  res.status(200).send("About page!");
+  res.status(200).send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Fuck You Pack Thet</h1>
+    </div>
+
+    <style>
+
+        .container {
+            width:100%;
+            min-height: 90vh;
+            display:flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1{
+            font-size:100px;
+        }
+    </style>
+</body>
+</html>`);
 });
 
 app.get('/products/:name', async (req, res) => {
