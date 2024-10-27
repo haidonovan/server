@@ -72,6 +72,7 @@ const Product = mongoose.model('Product', productSchema, 'product');
 // GET all products
 // GET a product by name
 app.get('/', async (req, res) => {
+  const clientIp = req.ip;
   res.status(200).send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,6 +83,7 @@ app.get('/', async (req, res) => {
 <body>
     <div class="container">
         <h1>Fuck You</h1>
+        <p>${clientIp}</p>
     </div>
 
     <style>
