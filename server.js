@@ -163,8 +163,6 @@ app.get('/', async(req, res) => {
       <body>
         <div class="container">
           <h1>Hello, I'm Furina Senpai Blehhhhhhhhhh!!!</h1>
-          <h1>Check out my other website</h1>
-          <a href="https://furina-senpai.s3.ap-southeast-1.amazonaws.com/1_Senpai_Websit/index.html" target="_blank">GET ME TO WEBSITE</a> <!-- Add actual URL -->
           <p>This is your information:</p>
           <div class="info">
             <p><strong>IP:</strong> ${clientIp}</p>
