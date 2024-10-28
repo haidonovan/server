@@ -85,7 +85,7 @@ const IpAddressModel = mongoose.model('Ipaddress',ipAddressSchema ,'ipaddress');
 // GET a product by name
 
 app.get('/', async(req, res) => {
-  const clientIp = req.ip;
+  const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0] || req.connection.remoteAddress;
   const userAgent = req.get('user-agent');
   const referrer = req.get('referer') || 'No referrer';
   console.log('Client IP:', clientIp);
