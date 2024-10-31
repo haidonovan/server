@@ -20,14 +20,7 @@ mongoose.connect(uri)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Define a Mongoose schema
-// const productSchema = new mongoose.Schema({
-//   name: String,
-//   category: Number,
-//   price: Number,
-//   status: String,
-//   description: String
-// });
+
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -39,6 +32,23 @@ const productSchema = new mongoose.Schema({
 }, {
   timestamps: true, // Optional: Automatically add createdAt and updatedAt fields
 });
+
+// --------------------------New Model products
+const productsSchema = new mongoose.Schema({
+  id: { type: Number, required: true },
+  name: { type: String, required: true },
+  categories: [{ type: Number, required: true }], // Assuming categories are numbers, update if needed
+  price: { type: Number, required: true },
+  priceRange: [{ type: Number, required: false }], // Array of price ranges
+  status: { type: String, required: true }, // 'Available' or 'Sold'
+  available: { type: Number, required: false }, // Quantity available
+  sold: { type: Number, required: false }, // Quantity sold
+  description: { type: String, required: false },
+  url: { type: String, required: false }
+}, {
+  timestamps: true,
+});
+
 
 // IP address schema
 
@@ -55,6 +65,9 @@ const Product = mongoose.model('Product', productSchema, 'product');
 
 // new Ip Address tracking for cookies
 const IpAddressModel = mongoose.model('Ipaddress',ipAddressSchema ,'ipaddress');
+
+// NEW PRODUCT
+const Products = mongoose.model('products', productsSchema, 'products');
 
 // Function to insert a product
 // ctr + c to disconnect
