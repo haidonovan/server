@@ -284,24 +284,274 @@ app.put('/products', async (req, res) => {
   }
 });
 
-// Start the server
-// Local
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
 
-// global
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://127.0.0.1:${PORT}`);
-// });
+
+
+
+
+
+// ================================================================ ADMIN API ===================================================================================
+
+// ============================================================== CRUD OPERATION
+
+// ========= GET ONE PRODUCT IF NOT EXIST GET NEXT PRODUCT WHO HAVE ID GREATER THAN ====================== /get/products/next/id
+//
+app.post('/get/products/next/id', async (req, res) => {
+  try {
+    const { id } = req.body; // Extracting id from the request body
+
+    // Validate if the id is a valid number
+    const productId = parseInt(id, 10);
+    if (isNaN(productId)) {
+      return res.status(400).json({ message: "Invalid ID: ID must be a number." });
+    }
+
+    // Attempt to find the product by id
+    const product = await Products.findOne({ id: productId });
+
+    if (product) {
+      // If the product is found, return it
+      return res.status(200).json({ message: "/get/products success!!", result: product });
+    } else {
+      // If not found, look for the next product with a greater ID
+      const nextProduct = await Products.findOne({ id: { $gt: productId } }).sort({ id: 1 });
+
+      if (nextProduct) {
+        return res.status(200).json({ message: "Product not found. Returning next greater product.", result: nextProduct });
+      } else {
+        return res.status(404).json({ message: "No product found greater than the provided ID." });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error!!", error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+// ======================== GET ALL PRODUCT ====================== /get/products/all
+//
+app.get('/get/products/all', async (req, res) => {
+  try {
+    const result = await Products.find();
+
+    res.status(200).json({message:"/get/products/all success!!", result:result});
+  }catch(error){
+    res.status(500).json({message:"Internal Server Error!!",error:error.message});
+  }
+});
+
+
+
+
+
+
+
+
+// ======================== PUT PRODUCT UPDATE ====================== /update/products/:id
+
+app.put('/update/products/:id', async (req, res) => {
+  try {
+    
+    const id = parseInt(req.params.id, 10); // Convert id to an integer
+
+    // Validate if the id is a valid number
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID: ID must be a number." });
+    }
+    const {name, categories, price, priceRange, status, available, sold, description, url } = req.body;
+    const result = await Products.updateOne(
+      {id:id},{
+        // Use $set to update only the provided fields
+        $set: {
+          name,
+          categories,
+          price,
+          priceRange,
+          status,
+          available,
+          sold,
+          description,
+          url
+        }
+      }
+    );
+    // Check if any document was modified
+    if(result.modifiedCount === 0){
+      return res.status(404).json({message:"Product not found or no changes made."});
+    }
+
+    res.status(200).json({message:"/update/products/:id success!!", result:result});
+
+
+  }catch(error){
+    res.status(500).json({message:"Internal Server Error!!",error:error.message});
+  }
+});
+
+
+
+
+
+
+
+// ======================== DELETE PRODUCT ====================== /delete/products/:id
+
+app.delete('/delete/products/:id', async(req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10); // Convert id to an integer
+
+    // Validate if the id is a valid number
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID: ID must be a number." });
+    }
+    const result = await Products.deleteOne({id:id});
+
+    if(result.deletedCount === 0){
+      return res.status(400).json({message:"Can't find the Product to Delete", result: result});
+    }
+
+    return res.status(200).json({message:"/delete/products/:id success!!", result:result});
+
+
+  }catch(error){
+    res.status(500).json({message:"Internal Server Error!!",error:error.message});
+  }
+});
+
+
+
+
+
+
+
+
+
+
+// ========= DELETE IF NOT EXIST DELETE NEXT PRODUCT ====================== /delete/products/next/:id
+// 
+app.delete('/delete/products/next/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10); // Convert id to an integer
+
+    // Validate if the id is a valid number
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID: ID must be a number." });
+    }
+
+    // Attempt to delete the specified ID
+    const result = await Products.deleteOne({ id: id });
+
+    // Check if the specified product was deleted
+    if (result.deletedCount === 0) {
+      // If not, find the next greater ID
+      const nextGreaterProduct = await Products.findOne({
+        id: { $gt: id }
+      }).sort({ id: 1 }); // Find the next closest ID greater than the specified ID
+
+      if (nextGreaterProduct) {
+        // Delete the next greater product if found
+        const deleteResult = await Products.deleteOne({ id: nextGreaterProduct.id });
+        return res.status(200).json({
+          message: `Product ID ${id} not found. Deleted next greater product ID ${nextGreaterProduct.id}.`,
+          result: deleteResult
+        });
+      } else {
+        // If no greater product exists
+        return res.status(404).json({ message: "No greater product available to delete." });
+      }
+    }
+
+    // Respond with a success message for the original ID
+    return res.status(200).json({ message: "Product deleted successfully!", result: result });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+
+// ======================== POST PRODUCT ADD NEW PRODUCT ====================== /post/products/one
+
+app.post('/post/products/one', async (req, res) => {
+  try {
+    const { name, categories, price, priceRange, status, available, sold, description, url } = req.body;
+
+    // Find the latest product ID
+    const latestProducts = await Products.aggregate([
+      {
+        $sort: { createdAt: -1 } // Sort by createdAt in descending order
+      },
+      {
+        $limit: 1 // Limit to the latest product
+      },
+      {
+        $project: { id: 1, _id: 0 } // Project only the id field
+      }
+    ]);
+
+    // Determine the next ID for the new product
+    let nextId = 1; // Default to 1 if no products exist
+    if (latestProducts.length > 0) {
+      nextId = latestProducts[0].id + 1; // Increment the latest ID for the new product
+    }
+
+    // Create the new product object
+    const newProduct = {
+      id: nextId,
+      name,
+      categories,
+      price,
+      priceRange,
+      status,
+      available,
+      sold,
+      description,
+      url,
+      createdAt: new Date() // Add createdAt field
+    };
+
+    // Save the new product to the database
+    const savedProduct = await Products.create(newProduct);
+
+    // Respond with success
+    return res.status(201).json({ message: "Product created successfully!", product: savedProduct });
+    
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+// =================================================================== START THE SERVER ===========================================================================
+// Start the server
+
+
+
+
+
+
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
 
-// app.listen(PORT, '0.0.0.0', () => {
-//   console.log(`Server running on http://0.0.0.0:${PORT}`);
-// });
 
-
-// module.exports.handler = serverless(app);
