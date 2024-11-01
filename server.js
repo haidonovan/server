@@ -58,7 +58,22 @@ const ipAddressSchema = new mongoose.Schema({
   referrer: {type:String, required: false},
 });
 
+// -------------------------- CATEGORIES SCHEMA
+const categoriesSchema = new mongoose.Schema({
+  id: { type: Number, required: true },
+  category: { type: String, required: true },
+  img: [{
+    url: { type: String, required: false },
+    imgId: { type: String, required: false },
+  }],
+},
+  {
+    timestamps: true,
+  });
 
+
+// new categories connection
+const Categories = mongoose.model('categories', categoriesSchema, 'categories');
 
 // Create a Mongoose model
 const Product = mongoose.model('Product', productSchema, 'product');
@@ -303,7 +318,7 @@ app.put('/products', async (req, res) => {
 
 
 
-// ================================================================ ADMIN API ===================================================================================
+// ================================================================ ADMIN API PRODUCT ===================================================================================
 
 // ============================================================== CRUD OPERATION
 
@@ -541,6 +556,96 @@ app.post('/post/products/one', async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error!", error: error.message });
   }
 });
+
+
+// ================================================================ ADMIN API CATEGORIES ===================================================================================
+
+// ===================== GET REQUEST CATEGORIES ==============================
+
+app.get('/get/categories/all', async(req, res) => {
+  try {
+    const result = await Categories.find().sort({ createdAt: 1 });
+
+    if(!result){
+      return res.status(400).json({message:"can't find any Categories", result:result});
+    }
+    return res.status(200).json({message:"success find all categories!!", result: result});
+
+  }catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+
+// ===================== POST CREATE REQUEST CATEGORIES ==============================
+// ===================================================================================================================================
+
+app.post('/create/categories', async (req, res) => {
+  try {
+    // Find the latest category by sorting in descending order (newest first)
+    const latestCategory = await Categories.findOne().sort({ createdAt: -1 });
+
+    let newId;
+    
+    // If a category exists, increment its ID, otherwise start from 1
+    if (latestCategory) {
+      newId = latestCategory.id + 1;
+    } else {
+      newId = 1; // If no categories exist, start with ID 1
+    }
+
+    // Create a new category with the incremented ID
+    const newCategory = new Categories({
+      id: newId,
+      category: req.body.category, // Get category name from the request body
+      img: req.body.img, // Get the image array from the request body
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Save the new category to the database
+    const savedCategory = await newCategory.save();
+
+    // Return success response
+    return res.status(201).json({ message: "Category created successfully!", category: savedCategory });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+
+// ===================== DELETE REQUEST CATEGORIES ==============================
+
+app.delete('/delete/categories/id', async(req, res) => {
+
+  try {
+    const {id} = req.body;
+    
+    if(!id){
+      return res.status(400).json({ message: "ID is required" });
+    }
+
+    const intId = parseInt(id,10);
+    if (!Number.isInteger(intId)) {
+      return res.status(400).json({ message: "ID must be an integer" });
+    }
+
+    const result = await Categories.deleteOne({id:intId});
+
+
+    if(result.deletedCount === 0){
+      return res.status(404).json({message:"can't find any"})
+    }
+
+    // Successful deletion
+    return res.status(200).json({ message: "Category deleted successfully!" });
+
+  }catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
 
 
 
