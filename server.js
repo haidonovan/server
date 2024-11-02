@@ -659,6 +659,82 @@ app.delete('/delete/categories/id', async(req, res) => {
 
 
 
+
+//  ================================================== API RELATION SHIP ======================================================
+
+//  =================================  PRODUCT WITH CATEGORIES NAME
+
+app.get('/get/products/join/categories/id/name/all', async(req, res) => {
+
+  try {
+    const result = await Products.aggregate([
+      {
+        $lookup:{
+          from: "categories",
+          localField: "categories",
+          foreignField: "id",
+          as: "categoryName"
+        }
+      },
+      {
+        $addFields: {
+          categoryName: {
+            $arrayElemAt: ["$categoryName.category",0]
+          }
+        }
+        
+      },
+      {
+        $addFields: {
+          categoryId: {
+            $arrayElemAt: ["$categories", 0]
+          }
+        }
+      },
+      {
+        $project: {
+          id: 1,
+          name: 1,
+          categoryName:1,
+          categoryId:1,
+          price:1,
+          priceRange:1,
+          status:1,
+          available:1,
+          sold:1,
+          description:1,
+          url:1,
+          createdAt:1,
+          updatedAt:1
+          
+        }
+      }
+    ]);
+
+
+    if(!result || result.length === 0){
+      return res.status(404).json({message:"No Data: /get/products/join/categories/id/name/all", result:result});
+    }
+
+    return res.status(200).json({message: "success!! /get/products/join/categories/id/name/all", result:result});
+
+  }catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 // =================================================================== START THE SERVER ===========================================================================
 // Start the server
 
