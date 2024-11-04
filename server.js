@@ -1133,6 +1133,94 @@ app.get('/get/products/join/categories/id/name/all', async(req, res) => {
 
 
 
+// ================================================ OPERATION RELATIONSHIOP CRUD ORDER INVOICE ACCOUNT PRODUCT ===================================================
+
+// ================================================================= /get/order/join/invoiceAccountProduct/:id
+app.get('/get/order/join/invoiceAccountProduct/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate that the id is a number
+    if (isNaN(id) || !Number.isInteger(parseFloat(id))) {
+      return res.status(400).json({ message: "Invalid ID! It must be a number." });
+    }
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          id: parseInt(id) // Ensure that the ID is treated as a number
+        }
+      },
+      {
+        $lookup: {
+          from: 'invoice',          // The collection to join with
+          localField: 'customerId', // Field from the input documents
+          foreignField: 'id',       // Field from the documents of the "from" collection
+          as: 'invoiceDetails'      // Output array field for joined documents
+        }
+      },
+      {
+        $unwind: {
+          path: '$invoiceDetails',  // Flatten the array of invoice details
+          preserveNullAndEmptyArrays: true // Optional: keep documents without matching invoices
+        }
+      },
+      {
+        $lookup: {
+          from: 'account',
+          localField: 'employeeId',
+          foreignField: 'id',
+          as: 'employeeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$employeeDetails', // Flatten the array of employee details
+          preserveNullAndEmptyArrays: true // Optional
+        }
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: 'id',
+          as: 'productDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$productDetails', // Flatten the array of product details
+          preserveNullAndEmptyArrays: true // Optional
+        }
+      },
+      {
+        $project: {
+          id: 1,
+          invoiceDetails: 1,
+          employeeDetails: 1,
+          productDetails: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        }
+      }
+    ]);
+
+    // Check if the result is empty
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Order not found!" });
+    }
+
+    // Send the result as a response
+    res.status(200).json({ message: "Order details retrieved successfully!", result: result });
+    
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+// ============================================================== END OF CRUD OPERATION RELATIONSHIP ORDER JOIN INVOICE ACCOUNT PRODUCT
+
+
 
 
 // =================================================================== START THE SERVER ===========================================================================
