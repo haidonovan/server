@@ -376,6 +376,33 @@ app.get('/get/products/all', async (req, res) => {
   }
 });
 
+// =========================== GET ID ONE PRODUCTS =================== /get/products/:id
+
+app.get('/get/products/:id', async(req, res) => {
+  try {
+    const { id } = req.
+    params; // Extract the id from the request parameters
+
+    // Check if the id is a number
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID!!", result: [] });
+    }
+
+    const result = await Products.find({ id: Number(id) }); // Convert id to a number for querying
+
+    // If no products found, return 404
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Product not found", result: [] });
+    }
+
+    return res.status(200).json({ message: "Success!!", result: result });
+
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+});
+
+
 
 
 
