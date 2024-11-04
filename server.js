@@ -137,7 +137,7 @@ const Products = mongoose.model('products', productsSchema, 'products');
 const Account = mongoose.model('account', accountsSchema, 'account');
 
 // invoice model collection
-const InvoiceSchema = mongoose.model('invoice', invoiceSchema, 'invoice');
+const Invoice = mongoose.model('invoice', invoiceSchema, 'invoice');
 
 // order model collection
 const OrderSchema = mongoose.model('order', invoiceSchema, 'order');
@@ -837,6 +837,111 @@ app.delete('/delete/accounts/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting account', error: error.message });
   }
 });
+
+
+
+
+// ===============================================================================  END OF ACCOUNT CRUD OPERATION  ================================================
+
+
+
+
+
+
+
+
+// ===============================================================================  INVOICE CRUD OPERATION  ================================================
+
+
+// =============================================== CREATE INVOICE invoices |          /create/invoices
+
+app.post('/create/invoices', async (req, res) => {
+  try {
+    const { name } = req.body; // Get parameters from the request body
+
+    // Find the latest invoice by sorting the id in descending order
+    const latestInvoice = await Invoice.findOne().sort({ id: -1 });
+
+    // Determine the next ID
+    const nextId = latestInvoice ? latestInvoice.id + 1 : 1; // Start from 1 if no documents exist
+
+    // Create a new invoice with the incremented ID
+    const invoice = new Invoice({ id: nextId, name });
+
+    // Save the new invoice to the database
+    await invoice.save();
+    
+    // Respond with the created invoice
+    res.status(201).json(invoice);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
+
+// =============================================== Read all invoices |            /get/invoices/all
+
+app.get('/get/invoices/all', async (req, res) => {
+  try {
+    const invoices = await Invoice.find();
+    res.json(invoices);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================== Read a specific invoice by ID | /get/invoices/:id
+
+app.get('/get/invoices/:id', async (req, res) => {
+  try {
+    const invoice = await Invoice.findOne({ id: req.params.id });
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+    res.json(invoice);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================== Update an invoice by ID (U)  | /update/invoices/:id
+
+app.put('/update/invoices/:id', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const invoice = await Invoice.findOneAndUpdate(
+      { id: req.params.id },
+      { name },
+      { new: true, runValidators: true }
+    );
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+    res.json(invoice);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// ================================================   Delete an invoice by ID (D) | /delete/invoices/:id
+
+app.delete('/delete/invoices/:id', async (req, res) => {
+  try {
+    const invoice = await Invoice.findOneAndDelete({ id: req.params.id });
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+// ================================================================================================ END OF INVOIC ================================================
+
+
 
 
 
