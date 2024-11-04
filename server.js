@@ -380,8 +380,7 @@ app.get('/get/products/all', async (req, res) => {
 
 app.get('/get/products/:id', async(req, res) => {
   try {
-    const { id } = req.
-    params; // Extract the id from the request parameters
+    const { id } = req.params; // Extract the id from the request parameters
 
     // Check if the id is a number
     if (isNaN(id)) {
