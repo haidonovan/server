@@ -426,11 +426,14 @@ app.post('/get/products/next/id', async (req, res) => {
 //
 app.get('/get/products/all', async (req, res) => {
   try {
-    const result = await Products.find();
+    // Fetch all products sorted by the id field in ascending order (1 to infinite)
+    const result = await Products.find().sort({ id: 1 });
 
-    res.status(200).json({message:"/get/products/all success!!", result:result});
-  }catch(error){
-    res.status(500).json({message:"Internal Server Error!!",error:error.message});
+    // Send a success response with the results
+    res.status(200).json({ message: "/get/products/all success!!", result: result });
+  } catch (error) {
+    // Handle any errors that occur during the database query
+    res.status(500).json({ message: "Internal Server Error!!", error: error.message });
   }
 });
 
