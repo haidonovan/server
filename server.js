@@ -805,10 +805,11 @@ app.get('/get/accounts/:id', async (req, res) => {
 app.put('/update/accounts/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, username, type } = req.body;
+    const { name, username, type , password} = req.body;
 
     const updatedAccount = await Account.findOneAndUpdate(
       { id: Number(id) },
+      { password: password},
       { name, username, type },
       { new: true, runValidators: true }
     );
