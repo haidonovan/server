@@ -50,6 +50,53 @@ const productsSchema = new mongoose.Schema({
 });
 
 
+
+
+
+
+
+// ================================================================ NEW  SCHEMA ==================================================================
+
+
+// -------------------------- ACCOUNT SCHEMA 
+const accountsSchema = new mongoose.Schema({
+  id: {type: Number, required: true },
+  name: { type: String, required: true},
+  username: { type: String, required: true},
+  password: {type: String, required: true},
+  type: { type: String, required: true},
+
+}, {
+  timestamps: true,
+});
+
+
+// -------------------------- INVOICE SCHEMA 
+const invoiceSchema = new mongoose.Schema({
+  id: {type: Number, required: true },
+  name: { type: String, required: true},
+},{
+  timestamps: true,
+});
+
+
+// -------------------------- ORDER SCHEMA 
+
+const orderSchema = new mongoose.Schema({
+  id: {type: Number, required: true },
+  customerId: { type: Number, required: false},
+  employeeId: { type: Number, required: false},
+  productId: { type: Number, required: false},
+},{
+  timestamps: true,
+});
+
+
+
+
+
+
+
 // IP address schema
 
 const ipAddressSchema = new mongoose.Schema({
@@ -83,6 +130,17 @@ const IpAddressModel = mongoose.model('Ipaddress',ipAddressSchema ,'ipaddress');
 
 // NEW PRODUCT
 const Products = mongoose.model('products', productsSchema, 'products');
+
+// ============================================================================= NEW ===============================================================================================
+
+// account collection
+const Account = mongoose.model('account', accountsSchema, 'account');
+
+// invoice model collection
+const InvoiceSchema = mongoose.model('invoice', invoiceSchema, 'invoice');
+
+// order model collection
+const OrderSchema = mongoose.model('order', invoiceSchema, 'order');
 
 // Function to insert a product
 // ctr + c to disconnect
@@ -669,6 +727,114 @@ app.delete('/delete/categories/id', async(req, res) => {
 
   }catch (error) {
     return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+  }
+});
+
+
+
+
+
+// ======================================================================= ACCOUNT 
+
+
+
+// -------------------------- CREATE (POST) -------------------------- /create/account
+
+app.post('/create/accounts', async (req, res) => {
+  try {
+    const { name, username, type, password } = req.body;
+
+    // Find the latest document by sorting on the `id` field in descending order
+    const lastAccount = await Account.findOne().sort({ id: -1 });
+
+    // Auto-increment the id
+    const newId = lastAccount ? lastAccount.id + 1 : 1; // If no accounts exist, start from id = 1
+
+    // Create the new account with the incremented id
+    const newAccount = new Account({
+      id: newId,      // Auto-incremented id
+      name,
+      username,
+      password,
+      type
+    });
+
+    // Save the new account to the database
+    await newAccount.save();
+
+    res.status(201).json({ message: 'Account created successfully', account: newAccount });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating account', error: error.message });
+  }
+});
+
+
+// -------------------------- READ (GET ALL) -------------------------- /get/accounts/all
+
+app.get('/get/accounts/all', async (req, res) => {
+  try {
+    const accounts = await Account.find(); // Fetch all accounts
+    res.status(200).json({ message: 'Accounts retrieved successfully', accounts });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching accounts', error: error.message });
+  }
+});
+
+// -------------------------- READ (GET BY ID) -------------------------- /get/accounts/:id
+
+app.get('/get/accounts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const account = await Account.findOne({ id: Number(id) });
+
+    if (!account) {
+      return res.status(404).json({ message: 'Account not found' });
+    }
+
+    res.status(200).json({ message: 'Account retrieved successfully', account });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching account', error: error.message });
+  }
+});
+
+// -------------------------- UPDATE (PUT) -------------------------- /update/accounts/:id
+
+app.put('/update/accounts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, username, type } = req.body;
+
+    const updatedAccount = await Account.findOneAndUpdate(
+      { id: Number(id) },
+      { name, username, type },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedAccount) {
+      return res.status(404).json({ message: 'Account not found' });
+    }
+
+    res.status(200).json({ message: 'Account updated successfully', account: updatedAccount });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating account', error: error.message });
+  }
+});
+
+// -------------------------- DELETE (DELETE) -------------------------- /delete/accounts/:id
+
+app.delete('/delete/accounts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedAccount = await Account.findOneAndDelete({ id: Number(id) });
+
+    if (!deletedAccount) {
+      return res.status(404).json({ message: 'Account not found' });
+    }
+
+    res.status(200).json({ message: 'Account deleted successfully', account: deletedAccount });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting account', error: error.message });
   }
 });
 
