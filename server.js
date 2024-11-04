@@ -140,7 +140,7 @@ const Account = mongoose.model('account', accountsSchema, 'account');
 const Invoice = mongoose.model('invoice', invoiceSchema, 'invoice');
 
 // order model collection
-const OrderSchema = mongoose.model('order', invoiceSchema, 'order');
+const Order = mongoose.model('order', orderSchema, 'order');
 
 // Function to insert a product
 // ctr + c to disconnect
@@ -946,6 +946,106 @@ app.delete('/delete/invoices/:id', async (req, res) => {
 
 
 
+
+
+
+
+// ========================================================================================== ORDER CRUD OPERATION ================================================
+
+
+
+
+// =============================================== Create a new order | /create/order
+//  lack
+
+app.post('/create/order', async (req, res) => {
+  try {
+    const { customerId, employeeId, productId } = req.body; // Get parameters from the request body
+
+    // Validate input
+    if (!customerId || !employeeId || !productId) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    // Find the latest order by sorting the id in descending order
+    const latestOrder = await Order.findOne().sort({ id: -1 });
+
+    // Determine the next ID
+    const nextId = latestOrder ? latestOrder.id + 1 : 1; // Start from 1 if no documents exist
+
+    // Create a new order with the incremented ID
+    const order = new Order({ id: nextId, customerId, employeeId, productId });
+
+    // Save the new order to the database
+    await order.save();
+
+    // Respond with the created order
+    res.status(201).json({ message: 'Order created successfully.', order });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
+  }
+});
+
+
+// =============================================== Read all orders | /get/orders/all
+app.get('/get/orders/all', async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================== Read a specific order by ID | /get/orders/:id
+app.get('/get/orders/:id', async (req, res) => {
+  try {
+    const order = await Order.findOne({ id: req.params.id });
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================== Update an order by ID | /update/orders/:id
+app.put('/update/orders/:id', async (req, res) => {
+  try {
+    const { customerId, employeeId, productId } = req.body;
+    const order = await Order.findOneAndUpdate(
+      { id: req.params.id },
+      { customerId, employeeId, productId },
+      { new: true, runValidators: true }
+    );
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.json(order);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// =============================================== Delete an order by ID | /delete/orders/:id
+app.delete('/delete/orders/:id', async (req, res) => {
+  try {
+    const order = await Order.findOneAndDelete({ id: req.params.id });
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+//  ======================================================================== END OF ORDER OPERATION =======================================================================================
 
 
 
