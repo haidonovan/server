@@ -802,16 +802,15 @@ app.get('/get/accounts/:id', async (req, res) => {
 
 // -------------------------- UPDATE (PUT) -------------------------- /update/accounts/:id
 
-app.put('/update/accounts/:id', async (req, res) => {
+app.put('/update/accounts/:id', async (req, res) => { 
   try {
     const { id } = req.params;
-    const { name, username, type , password} = req.body;
+    const { name, username, type, password } = req.body;
 
     const updatedAccount = await Account.findOneAndUpdate(
-      { id: Number(id) },
-      { password: password},
-      { name, username, type },
-      { new: true, runValidators: true }
+      { id: Number(id) }, // or { _id: id } if you're using MongoDB's default _id field
+      { name, username, type, password }, // Combine all fields to update into one object
+      { new: true, runValidators: true } // Options: return the new document and run validations
     );
 
     if (!updatedAccount) {
@@ -823,6 +822,8 @@ app.put('/update/accounts/:id', async (req, res) => {
     res.status(500).json({ message: 'Error updating account', error: error.message });
   }
 });
+
+
 
 // -------------------------- DELETE (DELETE) -------------------------- /delete/accounts/:id
 
