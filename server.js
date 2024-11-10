@@ -6,6 +6,17 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+// aws upload
+const { v4: uuidv4 } = require('uuid');
+const AWS = require('aws-sdk');
+
+const s3 = new AWS.S3({
+  accessKeyId: 'AKIA4MDEQE32CXALJIXX',      // replace with your access key
+  secretAccessKey: '49/Sl8MGOqJ/xpZ2fWx6igALWE3nwgWvE8qTaGDz', // replace with your secret key
+  region: 'ap-southeast-1'             // replace with your bucket's region
+});
+
+
 const app = express();
 const PORT = 5000;
 
@@ -1221,6 +1232,104 @@ app.get('/get/order/join/invoiceAccountProduct/:id', async (req, res) => {
 });
 
 // ============================================================== END OF CRUD OPERATION RELATIONSHIP ORDER JOIN INVOICE ACCOUNT PRODUCT
+
+
+
+
+// ===================================================================== UPLOAD API CATEGORIES =========================================================================================================================
+
+// ------------------------ AWS SERVER UPLOAD FILE============================= /img/upload/:categoryName
+
+
+app.post('/img/upload/:categoryName', async (req, res) => {
+  let fileBuffer = []; // Array to hold chunks of binary data
+  const {categoryName} = req.params;
+  req.on('data', chunk => {
+    fileBuffer.push(chunk); // Collect incoming data chunks
+  });
+
+  req.on('end', async () => {
+    const completeBuffer = Buffer.concat(fileBuffer); // Concatenate all chunks into a single buffer
+
+    const originalName = 'uploaded-image'; // Assign a generic name or retrieve from headers if needed
+
+    try {
+      const result = await uploadImage(completeBuffer, originalName, categoryName); // Process the buffer
+      res.json(result); // Send response back
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      res.status(500).send('Error uploading image');
+    }
+  });
+});
+
+const uploadImage = async (fileBuffer, originalName, categories) => {
+  const uniqueId = uuidv4();
+  const uniqueFileName = `images/${originalName}-${uniqueId}.jpg`;
+
+
+  const params = {
+    Bucket: 'shop-coffee-website',
+    Key: uniqueFileName,
+    Body: fileBuffer,
+    ContentType: 'image/jpg',
+  };
+
+  try {
+    await s3.upload(params).promise();
+    console.log(`image uploaded successfully: ${uniqueFileName}`);
+
+
+    // generate public link
+    const url = `https://${params.Bucket}.s3.amazonaws.com/${uniqueFileName}`;
+    console.log(`URL: https://${params.Bucket}.s3.amazonaws.com/${uniqueFileName} UNIQUE-FILE-NAME:${uniqueFileName}`);
+
+
+
+
+
+ const largestCategory = await Categories.findOne().sort({ id: -1 });
+    let newId = 1; // Default ID if no categories exist
+
+    if (largestCategory) {
+      newId = largestCategory.id + 1; // Increment the largest ID by 1
+    }
+
+    console.log(`New category ID: ${newId}`);
+
+    // Create a new category document with the new ID and image details
+    const newCategory = new Categories({
+      id: newId, // Use the incremented ID
+      category: categories, // Placeholder for the new category name
+      img: [{
+        url: url, // Insert the S3 image URL
+        imgId: uniqueId, // Insert the unique image ID
+      }],
+    });
+
+    // Save the new category to the database
+    await newCategory.save();
+
+    console.log('New category added:', newCategory);
+
+    return { uniqueFileName, url };
+  } catch (error) {
+    console.error('Error uploading image: ', error);
+  };
+};
+
+
+// ============================================================ END OF AWS UPLOAD API CATEGORIES WITH IMAGE AND CATEGORIES NAME AUTO ID
+
+
+
+
+
+
+
+
+
+
 
 
 
