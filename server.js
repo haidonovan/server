@@ -10,10 +10,13 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
 
+// .env
+require('dotenv').config();
+
 const s3 = new AWS.S3({
-  accessKeyId: 'AKIA4MDEQE32CXALJIXX',      // replace with your access key
-  secretAccessKey: '49/Sl8MGOqJ/xpZ2fWx6igALWE3nwgWvE8qTaGDz', // replace with your secret key
-  region: 'ap-southeast-1'             // replace with your bucket's region
+  accessKeyId: process.env.accessKeyId,      // replace with your access key
+  secretAccessKey: process.env.secretAccessKey, // replace with your secret key
+  region: process.env.region             // replace with your bucket's region
 });
 
 
@@ -25,8 +28,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB connection string
-DB = "coffee";
-const uri = `mongodb+srv://actionboyz2345:VPY0Klw2qXledssT@cluster0.zlaqsok.mongodb.net/${DB}?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = process.env.uri;
 mongoose.connect(uri)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
