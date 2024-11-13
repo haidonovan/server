@@ -84,13 +84,36 @@ const accountsSchema = new mongoose.Schema({
 });
 
 
-// -------------------------- INVOICE SCHEMA 
+
+// -------------------------- INVOICE SCHEMA  
 const invoiceSchema = new mongoose.Schema({
-  id: {type: Number, required: true },
-  name: { type: String, required: true},
-},{
+  id: { type: Number, required: true },
+  host: {type: String, required: false},
+  name: { type: String, required: true },
+  total_price: {type: Number, required: false},
+  payment: {type: Number, required: false},
+  change: {type: Number, required: false},
+
+  // khmer exchange
+  khmerTotalCost:{type: Number, required: false},
+  khmerPayment:{type: Number, required: false},
+  khmerChange:{type: Number, required: false},
+
+
+  // Array of product objects for each item in the invoice
+  products: [{
+    cupSize: { type: String, required: false },         // e.g., "Small", "Medium", "Large"
+    cupSizePrice: { type: Number, required: false },    // price based on cup size
+    iceLevel: { type: String, required: false },        // e.g., "No Ice", "Less Ice", "Normal Ice"
+    sugarSize: { type: String, required: false },       // e.g., "No Sugar", "Half Sugar", "Full Sugar"
+    amount: { type: Number, required: false },           // quantity of the order
+    category: { type: String, required: false },          // e.g., "Beverage", "Dessert", "Snack"
+    total: { type: Number, required: false },
+  }]
+}, {
   timestamps: true,
 });
+
 
 
 // -------------------------- ORDER SCHEMA 
@@ -875,7 +898,19 @@ app.delete('/delete/accounts/:id', async (req, res) => {
 
 app.post('/create/invoices', async (req, res) => {
   try {
-    const { name } = req.body; // Get parameters from the request body
+    const { name, host, products,payment,total_price,change,khmerTotalCost,khmerPayment,khmerChange } = req.body; // Get parameters from the request body
+
+    // Validate that 'products' is an array
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: 'Products array must be provided and cannot be empty.' });
+    }
+
+    // Validate each product (you can adjust validation based on your needs)
+    products.forEach(product => {
+      if (!product.amount || !product.category) {
+        return res.status(400).json({ message: 'Each product must have an amount and a category.' });
+      }
+    });
 
     // Find the latest invoice by sorting the id in descending order
     const latestInvoice = await Invoice.findOne().sort({ id: -1 });
@@ -883,12 +918,24 @@ app.post('/create/invoices', async (req, res) => {
     // Determine the next ID
     const nextId = latestInvoice ? latestInvoice.id + 1 : 1; // Start from 1 if no documents exist
 
-    // Create a new invoice with the incremented ID
-    const invoice = new Invoice({ id: nextId, name });
+    // Create a new invoice with the incremented ID and products array
+    const invoice = new Invoice({ 
+      id: nextId, 
+      name,
+      host,
+      products,
+      payment,
+      total_price,
+      change,
+
+      khmerPayment,
+      khmerTotalCost,
+      khmerChange,
+    });
 
     // Save the new invoice to the database
     await invoice.save();
-    
+
     // Respond with the created invoice
     res.status(201).json(invoice);
   } catch (error) {
