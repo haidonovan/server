@@ -836,6 +836,32 @@ app.get('/get/accounts/:id', async (req, res) => {
   }
 });
 
+
+// ------------------------------ LOGIN ------------------------------------- /get/username/verify/password
+
+app.post('/verify/accounts/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    const { password } = req.body;  // Expecting password from request body
+    const account = await Account.findOne({ username: String(username) });
+
+    if (!account) {
+      return res.status(404).json({ message: 'Incorrect username or password' });
+    }
+
+    if (account.password == password) {  // Assuming password is stored as plain text
+      res.status(200).json({ message: 'Account retrieved successfully', account });
+    } else {
+      return res.status(404).json({ message: 'Incorrect username or password' });
+    }
+    
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching account', error: error.message });
+  }
+});
+
+
+
 // -------------------------- UPDATE (PUT) -------------------------- /update/accounts/:id
 
 app.put('/update/accounts/:id', async (req, res) => { 
