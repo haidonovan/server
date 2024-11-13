@@ -412,7 +412,58 @@ app.put('/products', async (req, res) => {
 
 
 
+
 // ================================================================ ADMIN API PRODUCT ===================================================================================
+
+
+// ADMIN API FIND PRODUCT HAVE SPECIFIC CATEGRIES
+
+// GET PRODUCT USING CATE ID
+
+app.get('/get/products/categories/:id', async (req, res) => {
+  const categoryId = parseInt(req.params.id); // Get category ID from URL and convert to an integer
+
+  try {
+    // Aggregation pipeline to find products matching the category ID
+    const results = await Products.aggregate([
+      {
+        $match: {
+          categories: categoryId // Checks if categoryId exists in the categories array
+        }
+      }
+      // No $project stage, so the entire product document will be returned
+    ]);
+
+    if (results.length > 0) {
+      return res.status(200).json({ found: true, products: results });
+    } else {
+      return res.status(404).json({ found: false, message: 'No products found with that category ID.' });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ============================================================== CRUD OPERATION
 
