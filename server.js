@@ -120,13 +120,24 @@ const invoiceSchema = new mongoose.Schema({
 // -------------------------- ORDER SCHEMA 
 
 const orderSchema = new mongoose.Schema({
-  id: {type: Number, required: true },
-  customerId: { type: Number, required: false},
-  employeeId: { type: Number, required: false},
-  productId: { type: Number, required: false},
-},{
+  id: { type: Number, required: true },
+  customerId: { type: String, required: false },
+  employeeId: { type: String, required: false },
+  // Array of product objects for each item in the invoice
+  productId: [{
+    itemName: {type: String, required: false},
+    cupSize: { type: String, required: false },         // e.g., "Small", "Medium", "Large"
+    cupSizePrice: { type: Number, required: false },    // price based on cup size
+    iceLevel: { type: String, required: false },        // e.g., "No Ice", "Less Ice", "Normal Ice"
+    sugarSize: { type: String, required: false },       // e.g., "No Sugar", "Half Sugar", "Full Sugar"
+    amount: { type: Number, required: false },           // quantity of the order
+    category: { type: String, required: false },          // e.g., "Beverage", "Dessert", "Snack"
+    total: { type: Number, required: false },
+  }]
+}, {
   timestamps: true,
 });
+
 
 
 
