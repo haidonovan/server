@@ -102,6 +102,7 @@ const invoiceSchema = new mongoose.Schema({
 
   // Array of product objects for each item in the invoice
   products: [{
+    itemName: {type: String, required: false},
     cupSize: { type: String, required: false },         // e.g., "Small", "Medium", "Large"
     cupSizePrice: { type: Number, required: false },    // price based on cup size
     iceLevel: { type: String, required: false },        // e.g., "No Ice", "Less Ice", "Normal Ice"
