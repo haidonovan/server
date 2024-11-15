@@ -694,54 +694,91 @@ app.delete('/delete/products/next/:id', async (req, res) => {
 
 // ======================== POST PRODUCT ADD NEW PRODUCT ====================== /post/products/one
 
-app.post('/post/products/one', async (req, res) => {
+app.post('/post/products/one/:name/:categories/:price/:priceRange/:status/:available/:sold/:description', async (req, res) => {
   try {
-    const { name, categories, price, priceRange, status, available, sold, description, url } = req.body;
+    // Extracting the parameters from req.params
+    const { name, categories, price, priceRange, status, available, sold, description } = req.params;
+    let fileBuffer = []; // To hold chunks of image data
 
-    // Find the latest product ID
-    const latestProducts = await Products.aggregate([
-      {
-        $sort: { createdAt: -1 } // Sort by createdAt in descending order
-      },
-      {
-        $limit: 1 // Limit to the latest product
-      },
-      {
-        $project: { id: 1, _id: 0 } // Project only the id field
+    req.on('data', chunk => {
+      fileBuffer.push(chunk); // Collect incoming data chunks for the image
+    });
+
+    req.on('end', async () => {
+      const completeBuffer = Buffer.concat(fileBuffer); // Concatenate all chunks into a single buffer
+
+      try {
+        // Upload image to S3 and get the URL and unique file name
+        const { uniqueFileName, url } = await uploadImageProduct(completeBuffer, name);
+
+        // Find the product with the highest ID
+        const largestProduct = await Products.findOne().sort({ id: -1 });
+        let nextId = 1; // Default ID if no products exist
+
+        if (largestProduct) {
+          nextId = largestProduct.id + 1; // Increment the largest ID by 1
+        }
+
+        console.log(`New product ID: ${nextId}`);
+
+        // Create a new product document
+        const newProduct = new Products({
+          id: nextId, // Use the incremented ID
+          name,
+          categories: JSON.parse(categories), // Parse categories if sent as a stringified array
+          price: parseFloat(price),
+          priceRange: JSON.parse(priceRange), // Parse priceRange if sent as a stringified array
+          status,
+          available: JSON.parse(available),
+          sold: parseInt(sold, 10),
+          description,
+          url, // Image URL from S3
+          imgId: uniqueFileName, // Image's unique file name
+        });
+
+        // Save the new product to the database
+        await newProduct.save();
+
+        console.log('New product added:', newProduct);
+
+        // Respond with success
+        res.status(201).json({ message: "Product created successfully!", product: newProduct });
+      } catch (error) {
+        console.error('Error during product creation:', error);
+        res.status(500).json({ message: "Error during product creation.", error: error.message });
       }
-    ]);
-
-    // Determine the next ID for the new product
-    let nextId = 1; // Default to 1 if no products exist
-    if (latestProducts.length > 0) {
-      nextId = latestProducts[0].id + 1; // Increment the latest ID for the new product
-    }
-
-    // Create the new product object
-    const newProduct = {
-      id: nextId,
-      name,
-      categories,
-      price,
-      priceRange,
-      status,
-      available,
-      sold,
-      description,
-      url,
-      createdAt: new Date() // Add createdAt field
-    };
-
-    // Save the new product to the database
-    const savedProduct = await Products.create(newProduct);
-
-    // Respond with success
-    return res.status(201).json({ message: "Product created successfully!", product: savedProduct });
-    
+    });
   } catch (error) {
-    return res.status(500).json({ message: "Internal Server Error!", error: error.message });
+    console.error('Error setting up product upload:', error);
+    res.status(500).json({ message: "Internal Server Error!", error: error.message });
   }
 });
+
+const uploadImageProduct = async (fileBuffer, originalName) => {
+  const uniqueId = uuidv4();
+  const uniqueFileName = `products/${originalName}-${uniqueId}.jpg`;
+
+  const params = {
+    Bucket: 'shop-coffee-website',
+    Key: uniqueFileName,
+    Body: fileBuffer,
+    ContentType: 'image/jpg',
+  };
+
+  try {
+    await s3.upload(params).promise();
+    console.log(`Image uploaded successfully: ${uniqueFileName}`);
+
+    // Generate public link
+    const url = `https://${params.Bucket}.s3.amazonaws.com/${uniqueFileName}`;
+    console.log(`URL: ${url}`);
+
+    return { uniqueFileName, url };
+  } catch (error) {
+    console.error('Error uploading image: ', error);
+    throw new Error('Failed to upload image to S3.');
+  }
+};
 
 
 // ================================================================ ADMIN API CATEGORIES ===================================================================================
