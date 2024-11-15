@@ -972,6 +972,43 @@ app.delete('/delete/accounts/:id', async (req, res) => {
 // ===============================================================================  INVOICE CRUD OPERATION  ================================================
 
 
+
+
+// Route to get invoices by date range
+app.get('/get/invoices', async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  // Check if both dates are provided
+  if (!startDate || !endDate) {
+    return res.status(400).json({ message: 'Both startDate and endDate are required' });
+  }
+
+  // Convert the date strings to Date objects
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Ensure the end date is inclusive of the end day
+  end.setHours(23, 59, 59, 999);
+
+  try {
+    // Find invoices within the date range
+    const invoices = await Invoice.find({
+      createdAt: {
+        $gte: start,  // greater than or equal to the start date
+        $lte: end     // less than or equal to the end date
+      }
+    });
+
+    // Return the found invoices
+    res.json(invoices);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
 // =============================================== CREATE INVOICE invoices |          /create/invoices
 
 app.post('/create/invoices', async (req, res) => {
